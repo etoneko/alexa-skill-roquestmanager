@@ -63,7 +63,7 @@ const ConfirmRoutineHandler = {
   canHandle(handlerInput) {
     const request = handlerInput.requestEnvelope.request;
     return request.type === 'IntentRequest'
-                    && request.intent.name === 'ConfirmRoutineHandler';
+                    && request.intent.name === 'ConfirmRoutineIntent';
   },
   handle(handlerInput) {
     Util.callDirectiveService(handlerInput, 'お気に入りが再受注できるかお伝えします。');
@@ -93,18 +93,18 @@ const ConfirmQuestHandler = {
   canHandle(handlerInput) {
     const request = handlerInput.requestEnvelope.request;
     return request.type === 'IntentRequest'
-                    && request.intent.name === 'ConfirmQuestHandler';
+                    && request.intent.name === 'ConfirmQuestIntent';
   },
   handle(handlerInput) {
     const attributes = handlerInput.attributesManager.getSessionAttributes();
     const request = handlerInput.requestEnvelope.request;
 
-    if(!Util.isResolution(request.intent.slot.ConfirmQuest)) {
+    if(!Util.isResolution(request.intent.slots.ConfirmQuest)) {
       throw Error('NoQuestError');
     }
 
     const record = attributes.persistent.chara[0].questRecords.find((a) => {
-      return Util.getResolutionId(request.intent.slot.ConfirmQuest) === a.id;
+      return Util.getResolutionId(request.intent.slots.ConfirmQuest) === a.id;
     });
 
     const questData = QuestDataList.find((a) => {
