@@ -67,22 +67,29 @@ const ConfirmRoutineHandler = {
   },
   handle(handlerInput) {
     const attributes = handlerInput.attributesManager.getSessionAttributes();
-    let outputSpeak = 'お気に入りが再受注できるかお伝えします。';
-    attributes.persistent.chara[0].questRecords.filter((a) => {
+    let outputSpeak = '';
+    const routineQuest = attributes.persistent.chara[0].questRecords.filter((a) => {
       return a.routine;
-    }).map((record)=> {
-      const questData = QuestDataList.find(data => {
-        return record.id == data.id;
-      });
-      if(!record.reorderDate || new Date(record.reorderDate) <= new Date()) {
-        outputSpeak += questData.quest + 'は既に受注できる状態です。';
-      } else {
-        const diffNum = Util.getDateDiffNum(new Date(), new Date(record.reorderDate));
-        outputSpeak += questData.quest + 'は' + Util.convertHidukeYomi(diffNum) + '以降に受注できます。';
-      }
     });
+    if(routineQuest.length===0) {
+      outputSpeak += 'お気に入り登録されているクエストがありません。';
+    } else {
+      outputSpeak += 'お気に入りが再受注できるかお伝えします。';
+      routineQuest.map((record)=> {
+        const questData = QuestDataList.find(data => {
+          return record.id == data.id;
+        });
+        if(!record.reorderDate || new Date(record.reorderDate) <= new Date()) {
+          outputSpeak += questData.quest + 'は既に受注できる状態です。';
+        } else {
+          const diffNum = Util.getDateDiffNum(new Date(), new Date(record.reorderDate));
+          outputSpeak += questData.quest + 'は' + Util.convertHidukeYomi(diffNum) + '以降に受注できます。';
+        }
+      });
+    }
+
     return handlerInput.responseBuilder
-      .speak(outputSpeak + '他に何かありますか？')
+      .speak(outputSpeak + '以上です。他に何かありますか？')
       .reprompt('他に何かありますか？')
       .getResponse();
   }
@@ -107,10 +114,10 @@ const ConfirmQuestHandler = {
     });
 
     const questData = QuestDataList.find((a) => {
-      return record.id === a.id;
+      return Util.getResolutionId(request.intent.slots.ConfirmQuest) === a.id;
     });
 
-    if(record.length!==0 && record.reorderDate) {
+    if(record !== undefined && record.reorderDate) {
 
       const diffNum = Util.getDateDiffNum(new Date(), new Date(record.reorderDate));
       return handlerInput.responseBuilder
