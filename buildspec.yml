@@ -1,0 +1,12 @@
+version: 0.1
+phases:
+  install:
+    commands:
+      - npm install --prefix lambda/custom ask-sdk
+      - aws cloudformation package --template-file template.yaml --s3-bucket alexa-skill-roquestmanager
+                                   --output-template-file output-template.yaml
+artifacts:
+  type: zip
+  files:
+    - template.yaml
+    - output-template.yaml
