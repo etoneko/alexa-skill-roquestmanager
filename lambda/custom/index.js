@@ -66,9 +66,8 @@ const ConfirmRoutineHandler = {
                     && request.intent.name === 'ConfirmRoutineIntent';
   },
   handle(handlerInput) {
-    Util.callDirectiveService(handlerInput, 'お気に入りが再受注できるかお伝えします。');
     const attributes = handlerInput.attributesManager.getSessionAttributes();
-    let outputSpeak = '';
+    let outputSpeak = 'お気に入りが再受注できるかお伝えします。';
     attributes.persistent.chara[0].questRecords.filter((a) => {
       return a.routine;
     }).map((record)=> {
@@ -76,7 +75,7 @@ const ConfirmRoutineHandler = {
         return record.id == data.id;
       });
       if(!record.reorderDate || new Date(record.reorderDate) <= new Date()) {
-        outputSpeak += questData.quest + 'は受けられる状態です。';
+        outputSpeak += questData.quest + 'は既に受注できる状態です。';
       } else {
         const diffNum = Util.getDateDiffNum(new Date(), new Date(record.reorderDate));
         outputSpeak += questData.quest + 'は' + Util.convertHidukeYomi(diffNum) + '以降に受注できます。';
@@ -280,7 +279,7 @@ const CancelHandler = {
   },
   handle(handlerInput) {
     return handlerInput.responseBuilder
-      .speak('分かりました。他に何かありますか？')
+      .speak('他に何かありますか？')
       .reprompt('他に何かありますか？')
       .getResponse();
   }
