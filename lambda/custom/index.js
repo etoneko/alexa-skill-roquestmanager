@@ -10,31 +10,11 @@ const HELP_MESSAGE = '<p>r oのクエストを管理します。クエストを�
 
 const LaunchRequestHandler = {
   canHandle(handlerInput) {
-    const attributes = handlerInput.attributesManager.getSessionAttributes();
-    return handlerInput.requestEnvelope.request.type === 'LaunchRequest' || attributes.persistent.latestStartUp===undefined;
+    return handlerInput.requestEnvelope.request.type === 'LaunchRequest';
   },
-  async handle(handlerInput) {
-    Util.callDirectiveService(handlerInput, 'R Oクエスト管理を開始します。');
+  handle(handlerInput) {
     const attributes = handlerInput.attributesManager.getSessionAttributes();
-    await handlerInput.attributesManager.getPersistentAttributes().then((persistent) => {
-
-      if(Object.keys(persistent).length === 0) {
-        persistent = {
-          chara : [],
-          latestStartUp : new Date(),
-          latestCharaId : '1'
-        };
-
-        persistent.chara.push({
-          id : 1,
-          name : '',
-          questRecords : []
-        });
-      }
-      attributes.persistent = persistent;
-      handlerInput.attributesManager.setSessionAttributes(attributes);
-    });
-
+    Util.callDirectiveService(handlerInput, 'R Oクエスト管理を開始します。');
     attributes.persistent.chara[0].questRecords.filter((a) => {
       return a.reorderDate && new Date(a.reorderDate) <= new Date();
     }).map((record)=> {
@@ -48,9 +28,6 @@ const LaunchRequestHandler = {
         reorderDate : null
       }, attributes.persistent.chara[0].questRecords);
     });
-
-    // 最終起動日時をセット
-    attributes.persistent.latestStartUp = new Date();
 
     return handlerInput.responseBuilder
       .speak('指示をください。')
@@ -146,6 +123,7 @@ const QuestRegistDeleteProgressHandler = {
                         && request.dialogState !=='COMPLETED';
   },
   handle(handlerInput) {
+    
     return handlerInput.responseBuilder
       .addDelegateDirective()
       .getResponse();
@@ -180,7 +158,8 @@ const QuestRegistDeleteConfirmHandler = {
       } else { // slotName === 'DeleteQuest'
         outputSpeak = questName + 'をお気に入りから削除します。よろしいですか？';
       }
-
+      attributes.confirm = true;
+      handlerInput.attributesManager.setSessionAttributes(attributes);
       return handlerInput.responseBuilder
         .speak(outputSpeak)
         .addConfirmSlotDirective(slotName)
@@ -211,10 +190,17 @@ const QuestRegistDeleteConfirmHandler = {
         .getResponse();
 
     } else { // confirmationStatus === DENIED
-      return handlerInput.responseBuilder
-        .speak('登録をキャンセルしました。他に何かありますか？')
-        .reprompt('他に何かありますか？')
-        .getResponse();
+      if(slotName === 'RegistQuest') {
+        return handlerInput.responseBuilder
+          .speak('登録をキャンセルしました。他に何かありますか？')
+          .reprompt('他に何かありますか？')
+          .getResponse();
+      } else {
+        return handlerInput.responseBuilder
+          .speak('削除をキャンセルしました。他に何かありますか？')
+          .reprompt('他に何かありますか？')
+          .getResponse();
+      }
     }
   }
 };
@@ -285,10 +271,45 @@ const CancelHandler = {
                     && request.intent.name === 'AMAZON.CancelIntent';
   },
   handle(handlerInput) {
+    const attributes = handlerInput.attributesManager.getSessionAttributes();
+    handlerInput.attributesManager.setPersistentAttributes(attributes.persistent);
+    handlerInput.attributesManager.savePersistentAttributes();
     return handlerInput.responseBuilder
-      .speak('他に何かありますか？')
-      .reprompt('他に何かありますか？')
+      .speak('R Oクエスト管理を終了します。')
       .getResponse();
+  }
+};
+
+const GetPersistentDataRequestInterceptor = {
+  process(handlerInput) {
+    return new Promise(async (resolve) => {
+      const attributes = handlerInput.attributesManager.getSessionAttributes();
+      if(attributes.persistent !== undefined) {
+        resolve();
+        return;
+      }
+      await handlerInput.attributesManager.getPersistentAttributes().then((persistent) => {
+
+        if(Object.keys(persistent).length === 0) {
+          persistent = {
+            chara : [],
+            latestStartUp : new Date(),
+            latestCharaId : '1'
+          };
+  
+          persistent.chara.push({
+            id : 1,
+            name : '',
+            questRecords : []
+          });
+        }
+        attributes.persistent = persistent;
+        // 最終起動日時をセット
+        attributes.persistent.latestStartUp = new Date();
+        handlerInput.attributesManager.setSessionAttributes(attributes);
+      });
+      resolve();
+    });
   }
 };
 
@@ -332,6 +353,7 @@ exports.handler = skillBuilder
     MyAskCommon.SessionEndedRequestHandler
   )
   .addRequestInterceptors(
+    GetPersistentDataRequestInterceptor,
     MyAskCommon.DebugRequestInterceptor
   )
   .addResponseInterceptors(
