@@ -50,24 +50,51 @@ const unitNum2Kanji = (num) => {
 };
 exports.unitNum2Kanji = unitNum2Kanji;
 
-const convertHidukeYomi = (num) => {
-  if( typeof num !== 'number' || num <0 || num>=8)
+const conSpeechDayAfter = (num) => {
+  if( typeof num !== 'number' || num <0 || num>=10)
     return num;
-  return ['今日','明日','あさって','三日後','四日後','五日後','六日後','七日後'][num];
+  return ['今日','明日','あさって','三日後','四日後','五日後','六日後','七日後','八日後','九日後'][num];
 };
-exports.convertHidukeYomi = convertHidukeYomi;
+exports.conSpeechDayAfter = conSpeechDayAfter;
+
+const conSpeechHourHH12 = date => {
+  const hour = date.getHours();
+  const minute = date.getMinutes();
+
+  let output = '';
+  if(hour === 12 && minute === 0) {
+    output += '正午';
+  } else if (hour <12) {
+    output += '午前' + hour + '時';
+  } else {
+    output += '午後' + (hour-12) + '時';
+  }
+  return output;
+};
+exports.conSpeechHourHH12 = conSpeechHourHH12;
+
+const conSpeechMinute = date => {
+  return date.getMinutes() + '分';
+};
+exports.conSpeechMinute = conSpeechMinute;
+
+const conSpeechTimeHH12 = date => {
+  return date.getMinutes() ===0 ? 
+    conSpeechHourHH12(date) : conSpeechHourHH12(date) + conSpeechMinute(date);
+};
+exports.conSpeechTimeHH12 = conSpeechTimeHH12;
 
 /*
  *日付の差分日数を返却。
  */
 const getDateDiffNum = (today, targetDate) => {
  
-  const diff = targetDate.getTime() - today.getTime();
-  const tommorow = new Date(today.getFullYear(),today.getMonth(),today.getDate()+1);
-  const sub = tommorow.getTime() - today.getTime();
-
+  const today2 = new Date(today.getFullYear(),today.getMonth(),today.getDate());
+  const targetDay = new Date(targetDate.getFullYear(),targetDate.getMonth(),targetDate.getDate());
+  const diff = targetDay.getTime() - today2.getTime();
   // +1して返却
-  return Math.floor((diff - sub) / (1000 * 60 * 60 *24)) + 1;
+  return Math.floor(diff / (1000 * 60 * 60 *24));
 
 };
 exports.getDateDiffNum = getDateDiffNum;
+

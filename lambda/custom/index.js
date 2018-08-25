@@ -1,4 +1,3 @@
-process.env.TZ = 'Asia/Tokyo';
 const Alexa = require('ask-sdk');
 const Util = require('./ask-util');
 const ROQM = require('./ROQuestManager');
@@ -15,13 +14,14 @@ const LaunchRequestHandler = {
   handle(handlerInput) {
     const attributes = handlerInput.attributesManager.getSessionAttributes();
     Util.callDirectiveService(handlerInput, 'R Oクエスト管理を開始します。');
+    let speech = '';
     attributes.persistent.chara[0].questRecords.filter((a) => {
       return a.reorderDate && new Date(a.reorderDate) <= new Date();
     }).map((record)=> {
       const questData = QuestDataList.find(data => {
         return record.id == data.id;
       });
-      Util.callDirectiveService(handlerInput, questData.quest + 'が再受注可能になりました。');
+      speech += handlerInput, questData.quest + 'が再受注可能になりました。';
 
       ROQM.updateQuestRecord({
         id : record.id,
@@ -30,7 +30,7 @@ const LaunchRequestHandler = {
     });
 
     return handlerInput.responseBuilder
-      .speak('指示をください。')
+      .speak(speech + '指示をください。')
       .reprompt('指示をください。')
       .getResponse();
   },
@@ -60,7 +60,7 @@ const ConfirmRoutineHandler = {
           outputSpeak += questData.quest + 'は既に受注できる状態です。';
         } else {
           const diffNum = Util.getDateDiffNum(new Date(), new Date(record.reorderDate));
-          outputSpeak += questData.quest + 'は' + Util.convertHidukeYomi(diffNum) + '以降に受注できます。';
+          outputSpeak += questData.quest + 'は' + Util.conSpeechDayAfter(diffNum) + 'の' + Util.conSpeechTime(new Date(record.reorderDate)) + '以降に受注できます。';
         }
       });
     }
@@ -98,7 +98,7 @@ const ConfirmQuestHandler = {
 
       const diffNum = Util.getDateDiffNum(new Date(), new Date(record.reorderDate));
       return handlerInput.responseBuilder
-        .speak(questData.quest + 'は' + Util.convertHidukeYomi(diffNum) + '以降に受注できます。他に何かありますか？')
+        .speak(questData.quest + 'は' + Util.conSpeechDayAfter(diffNum) + 'の' + Util.conSpeechHourHH12(new Date(record.reorderDate)) + '以降に受注できます。他に何かありますか？')
         .reprompt('他に何かありますか？')
         .getResponse();
     } else {
@@ -108,7 +108,6 @@ const ConfirmQuestHandler = {
         .reprompt('他に何かありますか？')
         .getResponse();
     }
-
   }
 };
 
