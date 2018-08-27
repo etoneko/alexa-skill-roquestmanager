@@ -60,7 +60,7 @@ const ConfirmRoutineHandler = {
           outputSpeak += questData.quest + 'は既に受注できる状態です。';
         } else {
           const diffNum = Util.getDateDiffNum(new Date(), new Date(record.reorderDate));
-          outputSpeak += questData.quest + 'は' + Util.conSpeechDayAfter(diffNum) + 'の' + Util.conSpeechTime(new Date(record.reorderDate)) + '以降に受注できます。';
+          outputSpeak += questData.quest + 'は' + Util.conSpeechDayAfter(diffNum) + 'の' + Util.conSpeechTimeHH12(new Date(record.reorderDate)) + '以降に受注できます。';
         }
       });
     }
