@@ -21,7 +21,7 @@ const LaunchRequestHandler = {
       const questData = QuestDataList.find(data => {
         return record.id == data.id;
       });
-      speech += handlerInput, questData.quest + 'が再受注可能になりました。';
+      speech += questData.quest + 'が再受注可能になりました。';
 
       ROQM.updateQuestRecord({
         id : record.id,
